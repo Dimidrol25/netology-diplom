@@ -1,0 +1,1 @@
+![avatar](/screenshot/www.jpg)
