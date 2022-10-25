@@ -1,0 +1,44 @@
+---
+- name: Nginx and LetsEncrypt
+  hosts: proxy
+  become: yes
+  roles:
+    - nginx_le
+
+- name: Install mysql-servers
+  hosts: db
+  become: yes
+  roles:
+    - db
+
+- name: Install WordPress
+  hosts: wordpress
+  become: yes
+  roles:
+    - wordpress
+
+- name: Install Node Exporter
+  hosts: all
+  become: yes
+  roles:
+    - node_exporter
+
+- name: Install gitlab
+  hosts: gitlab
+  become: yes
+  roles:
+    - gitlab
+
+- name: Install Monitoring
+  hosts: monitoring
+  become: yes
+  roles:
+    - prometheus
+    - alertmanager
+    - grafana
+
+- name: Install runner
+  hosts: runner
+  become: yes
+  roles:
+    - runner

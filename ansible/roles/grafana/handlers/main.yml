@@ -1,0 +1,6 @@
+---
+- name: Restart grafana
+  become: true
+  service:
+    name: grafana-server
+    state: restarted

@@ -1,0 +1,91 @@
+---
+- name: Delete nginx proxy
+  apt:
+    name: nginx
+    state: '{{ item }}'
+    update_cache: yes
+  with_items:
+    - absent
+    - present
+
+- name: installing tools
+  apt:
+    name: '{{ php_modules }}'
+    state: present
+    update_cache: yes
+
+- name: installing tools
+  apt:
+    name: 'mysql-client'
+    state: present
+    update_cache: yes
+
+- name: Config nginx
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: www-data
+    group: www-data
+    mode: 0644
+
+- name: Remove default site config
+  file:
+    name: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Create document root
+  file:
+    path: "/var/www/{{ domain }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Download and unpack latest wordpress
+  unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: "/var/www/{{ domain }}"
+    remote_src: yes
+    creates: "/var/www/{{ domain }}/wordpress"
+
+- name: Set
+  file:
+    path: "/var/www/{{ domain }}"
+    state: directory
+    recurse: yes
+    owner: www-data
+    group: www-data
+
+- name: Update wp_conf file
+  template:
+     src: wp-config.php.j2
+     dest: /var/www/{{ domain }}/wordpress/wp-config.php
+     owner: www-data
+     group: www-data
+     mode: 0644
+
+#- name: Symlink default config
+#  file:
+#    src: "/etc/nginx/sites-available/default"
+#    dest: "/etc/nginx/sites-enabled/default"
+#    state: link
+
+- name: Restart 'php7.4-fpm'
+  systemd:
+    name: php7.4-fpm
+    state: restarted
+    enabled: yes
+
+- name: Start and enabled nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
+
+#- name: debug ansible_hostname
+#  debug: var={{ansible_hostname}}

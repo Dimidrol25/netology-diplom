@@ -1,0 +1,78 @@
+############# {{ domain }} ###############
+
+server {
+    listen 80;
+    server_name {{ domain }} www.{{ domain }};
+    location /.well-known/acme-challenge/ {
+      default_type "text/plain";
+        root /var/www/letsencrypt;
+      allow all;
+}
+location = /.well-known/acme-challenge/ {
+  return 404;
+ }
+}
+
+############# gitlab.{{ domain }} ###############
+
+server {
+    listen 80;
+    server_name gitlab.{{ domain }};
+    location /.well-known/acme-challenge/ {
+      default_type "text/plain";
+        root /var/www/letsencrypt;
+      allow all;
+}
+location = /.well-known/acme-challenge/ {
+  return 404;
+ }
+}
+
+
+############# grafana.{{ domain }} ###############
+
+server {
+    listen 80;
+    server_name grafana.{{ domain }};
+    location /.well-known/acme-challenge/ {
+      default_type "text/plain";
+        root /var/www/letsencrypt;
+      allow all;
+}
+location = /.well-known/acme-challenge/ {
+  return 404;
+ }
+}
+
+############# prometheus.{{ domain }} ###############
+
+server {
+    listen 80;
+    server_name  prometheus.{{ domain }};
+    location /.well-known/acme-challenge/ {
+      default_type "text/plain";
+        root /var/www/letsencrypt;
+      allow all;
+}
+location = /.well-known/acme-challenge/ {
+  return 404;
+ }
+}
+
+############# alertmanager.{{ domain }} ###############
+
+server {
+    listen 80;
+    server_name  alertmanager.{{ domain }};
+    location /.well-known/acme-challenge/ {
+      default_type "text/plain";
+        root /var/www/letsencrypt;
+      allow all;
+}
+location = /.well-known/acme-challenge/ {
+  return 404;
+ }
+}
+
+
+

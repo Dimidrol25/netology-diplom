@@ -1,0 +1,95 @@
+---
+- name: Install MySql Server
+  apt:
+    name:
+      - mysql-server
+      #- mysql-client
+      - python3-mysqldb
+    state: present
+    update_cache: yes
+
+#- name: Removes all anonymous user accounts
+#  community.mysql.mysql_user:
+#    name: ''
+#    host_all: yes
+#    state: absent
+
+- name: Create replication user
+  community.mysql.mysql_user:
+    name: replication_user
+    password: 12345678
+    host: db02.d-shapoval.ru
+    encrypted: no
+    priv: '*.*:REPLICATION SLAVE,REPLICATION CLIENT'
+    state: present
+  when: "'db01.d-shapoval.ru' == inventory_hostname"
+
+- name: Template master
+  template:
+    src: master.cnf.j2
+    dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+  when: "'db01.d-shapoval.ru' == inventory_hostname"
+  notify: Restart MySQL
+
+- name: Template slave
+  template:
+    src: slave.cnf.j2
+    dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+  when: "'db02.d-shapoval.ru' == inventory_hostname"
+
+- name: Stop slave
+  mysql_replication:
+    mode: stopslave
+  when: "'db02.d-shapoval.ru' == inventory_hostname"
+
+- name: Get master for slave
+  mysql_replication:
+    mode: getmaster
+  register: master
+  delegate_to: db01.d-shapoval.ru
+  when: "'db02.d-shapoval.ru' == inventory_hostname"
+
+- name: Configure replication on the slave.
+  mysql_replication:
+    mode: changemaster
+    master_host: "db01.d-shapoval.ru"
+    master_user: "replication_user"
+    master_password: 12345678
+    master_log_file: "{{ master.File }}"
+    master_log_pos: "{{ master.Position }}"
+  when: "'db02.d-shapoval.ru' == inventory_hostname"
+
+- name: Debug
+  debug:
+    msg: "{{ master }}"
+  when: "'db02.d-shapoval.ru' == inventory_hostname"
+
+- name: Start slave
+  mysql_replication: 
+    mode: startslave
+  when: "'db02.d-shapoval.ru' == inventory_hostname"
+  notify: Restart MySQL
+
+#- name: Restart MySql service
+#  ansible.builtin.shell: /etc/init.d/mysql restart
+
+- name: Create a new database with name 'wordpress'
+  community.mysql.mysql_db:
+    name: wordpress
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+  #when: "'db01.d-shapoval.ru' == inventory_hostname"
+
+- name: Create database user wordpress
+  community.mysql.mysql_user:
+    name: wordpress
+    password: wordpress
+    host: app.d-shapoval.ru
+    priv: 'wordpress.*:ALL'
+    state: present
+  #when: "'db01.d-shapoval.ru' == inventory_hostname"
+
+- name: Run start replication 
+  community.mysql.mysql_replication:
+    mode: startreplica
+  when: "'db02.d-shapoval.ru' == inventory_hostname"

@@ -1,0 +1,69 @@
+############# {{ domain }} ###############
+
+server {
+  listen               443 ssl;
+  server_name          {{ domain }} www.{{ domain }};
+  access_log           /var/log/nginx/{{ domain }}_access.log;
+  error_log            /var/log/nginx/{{ domain }}_error.log;
+  ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem;
+  location / {
+           proxy_pass  http://app.{{ domain }}:80;
+  }
+}
+
+############# gitlab.{{ domain }} ###############
+
+server {
+  listen          443 ssl;
+  server_name     gitlab.{{ domain }};
+  access_log           /var/log/nginx/gitlab.{{ domain }}_access.log;
+  error_log            /var/log/nginx/gitlab.{{ domain }}_error.log;
+  ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem;
+  location / {
+           proxy_pass   http://gitlab.{{ domain }}:80;
+  }
+}
+
+############# grafana.{{ domain }} ###############
+
+server {
+  listen          443 ssl;
+  server_name     grafana.{{ domain }};
+  access_log           /var/log/nginx/grafana.{{ domain }}_access.log;
+  error_log            /var/log/nginx/grafana.{{ domain }}_error.log;
+  ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem;
+  location / {
+           proxy_pass   http://monitoring.{{ domain }}:3000;
+  }
+}
+
+############# prometheus.{{ domain }} ###############
+
+server {
+  listen          443 ssl;
+  server_name     prometheus.{{ domain }};
+  access_log           /var/log/nginx/{{ domain }}_access_log;
+  ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem;
+  error_log            /var/log/nginx/prometheus.{{ domain }}_error_log;
+  location / {
+           proxy_pass   http://monitoring.{{ domain }}:9090;
+  }
+}
+
+############# alertmanager.{{ domain }} ###############
+
+server {
+  listen          443 ssl;
+  server_name     alertmanager.{{ domain }};
+  access_log           /var/log/nginx/alertmanager.{{ domain }}_access_log;
+  error_log            /var/log/nginx/alertmanager.{{ domain }}_error_log;
+  ssl_certificate /etc/letsencrypt/live/{{ domain }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem;
+  location / {
+           proxy_pass   http://monitoring.{{ domain }}:9093;
+  }
+}

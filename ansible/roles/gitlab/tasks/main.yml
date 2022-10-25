@@ -1,0 +1,45 @@
+---
+- name: Installing Gitlab
+  apt: >
+    name: "{{ item }}"
+    state: present
+    update_cache=yes
+  loop:
+    - curl
+    - apt-transport-https
+    - openssh-server
+    - ca-certificates
+    - tzdata
+    - perl
+    - postfix
+  tags: [ gitlab ]
+
+- name: create project Gitlab direcctory
+  file: 
+    state=directory
+    path=/mnt/project
+    mode=0644
+
+- name: Download Gitlab package
+  get_url:
+    url="https://packages.gitlab.com/gitlab/gitlab-ce/packages/ubuntu/bionic/gitlab-ce_13.2.1-ce.0_amd64.deb/download.deb"
+    dest="/mnt/project/gitlab-ce.deb" 
+    mode=0644
+
+- name: Install gitlab deb package
+  apt:
+    deb: "/mnt/project/gitlab-ce.deb"
+
+- name: Copy GitLab configuration file.
+  template:
+    src: gitlab.j2
+    dest: /etc/gitlab/gitlab.rb
+    owner: root
+    group: root
+    mode: 'u=rw,g=r,o=r'
+    backup: yes
+
+- name: Reconfigure GitLab (first run).
+  command: >
+    gitlab-ctl reconfigure
+  failed_when: false

@@ -1,0 +1,77 @@
+- name: Create prometheus user
+  user:
+    name: prometheus
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+
+- name: Create prometheus group
+  group:
+    name: prometheus
+    state: present
+    system: true
+
+- name: Unarchive prometheus
+  ansible.builtin.unarchive:
+    src: https://github.com/prometheus/prometheus/releases/download/v2.38.0/prometheus-2.38.0.linux-amd64.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: Move prometheus
+  command: mv /tmp/prometheus-2.38.0.linux-amd64/prometheus /usr/local/bin/prometheus
+
+- name: Change prometheus file ownership, group and permissions
+  ansible.builtin.file:
+    dest: /usr/local/bin/prometheus
+    owner: prometheus
+    group: prometheus
+    mode: 0775
+    #recurse: yes
+
+- name: Copy the prometheus.service init file
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create prometheus directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+  with_items:
+    - "/etc/prometheus"
+    - "/etc/prometheus/rules"
+    - "/var/lib/prometheus"
+
+- name: Copy the prometheus conf
+  template:
+    src: prometheus.j2
+    dest: /etc/prometheus/prometheus.yaml
+
+#- name: alerting rules file
+#  template:
+#    src: "alert.rules.j2"
+#    dest: "/etc/prometheus/rules/alert.rules.yaml"
+#    owner: prometheus
+#    group: prometheus
+#    mode: 0640
+
+#- name: create prometheus data directory
+#  file:
+#    path: "/var/lib/prometheus"
+#    state: directory
+#    owner: prometheus
+#    group: prometheus
+#    mode: 0755
+
+- name: Enable prometheus
+  systemd:
+    name: prometheus
+    state: started
+    enabled: yes

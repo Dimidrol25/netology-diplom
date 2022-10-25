@@ -1,0 +1,66 @@
+---
+- name: Create alertmanager user
+  user:
+    name: alertmanager
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+
+- name: Create alertmanager group
+  group:
+    name: alertmanager
+    state: present
+    system: true
+
+- name: Download and unarchive alertmanager
+  ansible.builtin.unarchive:
+    src: https://github.com/prometheus/alertmanager/releases/download/v0.24.0/alertmanager-0.24.0.linux-amd64.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: Move alertmanager binary file
+  command: mv /tmp/alertmanager-0.24.0.linux-amd64/alertmanager /usr/local/bin/alertmanager
+
+- name: Change alert_manager file ownership, group and permissions
+  file:
+    dest: /usr/local/bin/alertmanager
+    owner: alertmanager
+    group: alertmanager
+    mode: 0775
+
+- name: Copy the alertmanager.service init file
+  template:
+    src: alertmanager.conf.j2
+    dest: /etc/systemd/system/alertmanager.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create alert_manager directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: alertmanager
+    group: alertmanager
+    mode: 0755
+  with_items:
+    - "/var/lib/alertmanager"
+    - "/etc/alertmanager"
+    - "/etc/alertmanager/rules"
+
+- name: Alerting rules file
+  copy:
+    src: rules.yaml
+    dest: /etc/alertmanager/rules/rules.yaml
+
+- name: Copy config file
+  copy:
+    src: alertmanager.yml
+    dest: /etc/alertmanager/alertmanager.yml
+
+- name: Enable node_exporter
+  systemd:
+    name: alertmanager
+    state: started
+    enabled: yes

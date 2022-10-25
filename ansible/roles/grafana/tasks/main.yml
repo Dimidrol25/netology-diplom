@@ -1,0 +1,88 @@
+- name: Copy deb file
+  copy:
+    src: grafana-enterprise_9.1.6_amd64.deb
+    dest: /tmp/grafana-enterprise_9.1.6_amd64.deb
+
+- name: Install deb
+  command: apt install /tmp/grafana-enterprise_9.1.6_amd64.deb -y --allow-downgrades
+
+- name: Grafana configuration file copy
+  template:
+    src: grafana.j2
+    dest: /etc/grafana/grafana.ini
+
+- name: Grafana server started
+  service:
+    name: grafana-server
+    enabled: true
+    state: started
+
+- name: Update data file
+  become: true
+  copy:
+    dest: "/etc/grafana/provisioning/datasources/default.yml"
+    content: |
+      apiVersion: 1
+      deleteDatasources: []
+      datasources:
+        - name: "Prometheus"
+          type: "prometheus"
+          access: "proxy"
+          url: "http://localhost:9090"
+          isDefault: true
+    backup: false
+    owner: root
+    group: grafana
+    mode: 0640
+  notify: Restart grafana
+
+- name: Create grafana dashboards data directory
+  file:
+    path: /var/lib/grafana/dashboards
+    state: directory
+    owner: grafana
+    group: grafana
+    mode: 0755
+
+- name: Copy dashboard file
+  copy:
+    src: node_exporter.json
+    dest: /var/lib/grafana/dashboards/node_exporter.json
+
+- name: Update data file
+  become: true
+  copy:
+    dest: "/etc/grafana/provisioning/dashboards/default.yml"
+    content: |
+      apiVersion: 1
+      providers:
+        - name: Default
+          orgId: 1
+          folder: ''
+          type: file
+          updateIntervalSeconds: 10
+          options:
+            path: /var/lib/grafana/dashboards
+    backup: false
+    owner: root
+    group: grafana
+    mode: 0644
+  notify: Restart grafana
+
+- name: Set privileges on provisioned dashboards
+  become: true
+  file:
+    path: /var/lib/grafana/dashboards
+    recurse: true
+    owner: grafana
+    group: grafana
+    mode: 0640
+
+- name: Set privileges on provisioned dashboards directory
+  become: true
+  file:
+    path: /var/lib/grafana/dashboards
+    state: directory
+    recurse: false
+    mode: 0755
+  notify: Restart grafana

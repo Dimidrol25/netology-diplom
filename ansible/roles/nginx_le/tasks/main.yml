@@ -1,0 +1,64 @@
+---
+- name: Update remote system
+  apt:
+    update_cache: yes
+
+- name: Install NGINX and Certbot
+  apt:
+    name: 
+     - nginx
+     - certbot
+     - python3-certbot-nginx
+    state: latest
+
+- name: Start NGINX and Enable
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Check if certificate already exists
+  stat:
+    path: "/etc/letsencrypt/live/{{ domain }}/cert.pem"
+  register: letsencrypt_cert
+
+- name: Create LetsEncrypt directory
+  file:
+    name: /var/www/letsencrypt/.well-known/acme-challenge
+    state: directory
+    owner: www-data
+    group: www-data
+
+- name: Add nginx.conf
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+
+- name: Remove default site config
+  file:
+    name: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Add http conf
+  template:
+    src: http.j2
+    dest: /etc/nginx/sites-enabled/http.conf
+  notify:
+    - Reload NGINX
+
+- name: Force generation of a new certificate
+  shell: >
+    certbot certonly --email d-shapoval@yandex.ru --webroot -w /var/www/letsencrypt -d d-shapoval.ru -d www.d-shapoval.ru -d gitlab.d-shapoval.ru -d grafana.d-shapoval.ru -d prometheus.d-shapoval.ru -d alertmanager.d-shapoval.ru --agree-tos --noninteractive
+
+- name: Add cron job for certbot renewal 
+  cron:
+    name: Certbot automatic renewal
+    job: "certbot renew"
+    month: "*/2"
+
+- name: Add https conf
+  template:
+    src: https.j2
+    dest: /etc/nginx/sites-enabled/https.conf
+  notify:
+    - Reload NGINX

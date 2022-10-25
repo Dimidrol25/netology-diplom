@@ -1,0 +1,16 @@
+    
+[proxy]
+d-shapoval.ru ansible_host=178.154.220.120 email=d-shapoval@yandex.ru domain=d-shapoval.ru ansible_user=ubuntu
+    
+[db]
+db01.d-shapoval.ru ansible_host=178.154.220.233 ansible_user=ubuntu
+db02.d-shapoval.ru ansible_host=178.154.207.59 ansible_user=ubuntu
+   
+[wordpress]
+app.d-shapoval.ru ansible_host=178.154.204.23 domain=d-shapoval.ru ansible_user=ubuntu 
+[gitlab]
+gitlab.d-shapoval.ru ansible_host=130.193.51.78 domain=d-shapoval.ru gitlab_external_url=http://gitlab.d-shapoval.ru/ ansible_user=ubuntu
+[runner]
+runner.d-shapoval.ru ansible_host=51.250.66.15 domain=d-shapoval.ru ansible_user=ubuntu
+[monitoring]
+monitoring.d-shapoval.ru ansible_host=178.154.221.201 domain=d-shapoval.ru ansible_user=ubuntu
