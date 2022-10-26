@@ -39,19 +39,19 @@
 
 - name: Stop slave
   mysql_replication:
-    mode: stopslave
+    mode: stopreplica
   when: "'db02.d-shapoval.ru' == inventory_hostname"
 
 - name: Get master for slave
   mysql_replication:
-    mode: getmaster
+    mode: getprimary
   register: master
   delegate_to: db01.d-shapoval.ru
   when: "'db02.d-shapoval.ru' == inventory_hostname"
 
 - name: Configure replication on the slave.
   mysql_replication:
-    mode: changemaster
+    mode: changeprimary
     master_host: "db01.d-shapoval.ru"
     master_user: "replication_user"
     master_password: 12345678
@@ -66,7 +66,7 @@
 
 - name: Start slave
   mysql_replication: 
-    mode: startslave
+    mode: startreplica
   when: "'db02.d-shapoval.ru' == inventory_hostname"
   notify: Restart MySQL
 
