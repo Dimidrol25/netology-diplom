@@ -3,14 +3,6 @@
   apt:
     update_cache: yes
 
-- name: Remove NGINX and Certbot
-  apt:
-    name:
-     - nginx
-     - certbot
-     - python3-certbot-nginx
-    state: absent
-
 - name: Install NGINX and Certbot
   apt:
     name: 
